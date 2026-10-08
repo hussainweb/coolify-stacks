@@ -1,0 +1,4 @@
+services:
+  docs-mcp:
+    ports:
+      - "6280:6280"

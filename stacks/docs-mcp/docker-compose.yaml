@@ -1,0 +1,25 @@
+services:
+  docs-mcp:
+    image: ghcr.io/arabold/docs-mcp-server:latest
+    container_name: docs-mcp
+    restart: unless-stopped
+    environment:
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-6280}
+      - DOCS_MCP_STORE_PATH=${DOCS_MCP_STORE_PATH:-/data}
+      - XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-/config}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - docs-mcp-data:/data
+      - docs-mcp-config:/config
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:' + (process.env.PORT || 6280) + '/', (res) => process.exit(res.statusCode >= 200 && res.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  docs-mcp-data:
+  docs-mcp-config:
