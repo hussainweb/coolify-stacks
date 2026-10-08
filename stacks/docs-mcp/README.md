@@ -43,12 +43,21 @@ Configure any needed environment variables in Coolify's **Environment Variables*
 | `PORT` | Listening port | `6280` |
 | `DOCS_MCP_PROTOCOL` | Server protocol (`http` or `stdio`) | `http` |
 | `DOCS_MCP_STORE_PATH` | Path for data index and cache | `/data` |
-| `XDG_CONFIG_HOME` | Path for persistent config | `/config` |
+| `AUTH_ENABLED` | Enable OAuth2/OIDC authentication (`true` or `false`) | `false` |
+| `DOCS_MCP_AUTH_ISSUER_URL` | Issuer / discovery URL of OIDC provider (e.g. `https://auth.yourdomain.com`) | None |
+| `DOCS_MCP_AUTH_AUDIENCE` | Expected JWT audience claim (e.g. `https://docs-mcp.yourdomain.com`) | None |
 | `OPENAI_API_BASE` | OpenAI-compatible API base URL (e.g. `http://ollama:11434/v1`) | None |
 | `DOCS_MCP_EMBEDDING_MODEL` | Embedding model (e.g. `nomic-embed-text:latest`, `gemini:text-embedding-004`) | None (BM25 search) |
 | `OPENAI_API_KEY` | API key (set to `ollama` for local Ollama) | `ollama` |
 | `GOOGLE_API_KEY` | *(Optional)* Google Gemini API key | None |
 | `ANTHROPIC_API_KEY` | *(Optional)* Anthropic API key | None |
+
+> **Authentication (OAuth2 / OIDC)**:
+> The Docs MCP server supports RFC 6749 / RFC 7591 OAuth2 and OIDC Bearer token validation for protecting MCP endpoints:
+> - **Enabling Authentication**: Set `AUTH_ENABLED=true`. The container dynamically starts with `--auth-enabled --auth-issuer-url <URL> --auth-audience <AUDIENCE>`.
+> - **Issuer URL (`DOCS_MCP_AUTH_ISSUER_URL`)**: Point to your OIDC provider endpoint (e.g. `https://auth.yourdomain.com` or your Keycloak / Authentik / Google OIDC issuer). The server queries `/.well-known/openid-configuration` and validates JWT signatures via JWKS.
+> - **Audience (`DOCS_MCP_AUTH_AUDIENCE`)**: The expected `aud` claim in incoming Bearer tokens (e.g. `https://docs-mcp.yourdomain.com` or client ID).
+> - **Forward-Auth (TinyAuth Web SSO)**: If you use a forward-auth proxy like TinyAuth to protect the web dashboard in your homelab reverse proxy (NPM/Traefik), leave `AUTH_ENABLED=false` on the container and attach your forward-auth snippet to the web route in the reverse proxy.
 
 > **Using with Local Ollama**:
 > To enable semantic vector embeddings using your homelab Ollama:
@@ -65,6 +74,7 @@ Configure any needed environment variables in Coolify's **Environment Variables*
 > - `gemini:...` routes to Google Gemini (reads `GOOGLE_API_KEY`).
 > - `openai:...` or untagged local models (like `nomic-embed-text`) route to the OpenAI-compatible endpoint (reads `OPENAI_API_BASE` and `OPENAI_API_KEY`).
 > - If `DOCS_MCP_EMBEDDING_MODEL` is left empty, it defaults to OpenAI's `text-embedding-3-small` (or full-text BM25 search if no keys are set).
+
 
 
 
