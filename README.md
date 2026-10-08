@@ -10,7 +10,7 @@ This repository serves as a centralized monorepo for self-hosted service definit
 
 | Stack | Description | Upstream Image | Documentation |
 | :--- | :--- | :--- | :--- |
-| **`docs-mcp`** | Grounded Tools Docs MCP server (documentation fetch & search) | `ghcr.io/arabold/docs-mcp-server:latest` | [docs-mcp README](stacks/docs-mcp/README.md) |
+| **`docs-mcp`** | Grounded Tools Docs MCP server (documentation fetch & search) | `ghcr.io/arabold/docs-mcp-server:3.2.1` | [docs-mcp README](stacks/docs-mcp/README.md) |
 
 ---
 

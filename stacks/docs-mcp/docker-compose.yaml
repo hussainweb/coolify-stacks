@@ -1,6 +1,6 @@
 services:
   docs-mcp:
-    image: ghcr.io/arabold/docs-mcp-server:latest
+    image: ghcr.io/arabold/docs-mcp-server:3.2.1
     container_name: docs-mcp
     restart: unless-stopped
     environment:
