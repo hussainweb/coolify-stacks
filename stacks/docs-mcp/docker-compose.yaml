@@ -3,31 +3,18 @@ services:
     image: ghcr.io/arabold/docs-mcp-server:3.2.1
     container_name: docs-mcp
     restart: unless-stopped
-    command:
-      - /bin/sh
-      - -c
-      - |
-        ARGS="server --protocol http"
-        if [ "$${AUTH_ENABLED:-false}" = "true" ] || [ "$${DOCS_MCP_AUTH_ENABLED:-false}" = "true" ]; then
-          ARGS="$$ARGS --auth-enabled"
-          if [ -n "$$DOCS_MCP_AUTH_ISSUER_URL" ]; then
-            ARGS="$$ARGS --auth-issuer-url $$DOCS_MCP_AUTH_ISSUER_URL"
-          fi
-          if [ -n "$$DOCS_MCP_AUTH_AUDIENCE" ]; then
-            ARGS="$$ARGS --auth-audience $$DOCS_MCP_AUTH_AUDIENCE"
-          fi
-        fi
-        exec node --enable-source-maps dist/index.js $$ARGS
+    command: ["server", "--protocol", "http"]
     environment:
       - HOST=${HOST:-0.0.0.0}
       - PORT=${PORT:-6280}
       - DOCS_MCP_PROTOCOL=${DOCS_MCP_PROTOCOL:-http}
       - DOCS_MCP_STORE_PATH=${DOCS_MCP_STORE_PATH:-/data}
       - XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-/config}
-      # OAuth2 / OIDC Authentication (TinyAuth, Keycloak, Auth0, etc.)
-      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      # OAuth2 / OIDC Authentication
+      - DOCS_MCP_AUTH_ENABLED=${DOCS_MCP_AUTH_ENABLED:-false}
       - DOCS_MCP_AUTH_ISSUER_URL=${DOCS_MCP_AUTH_ISSUER_URL:-}
       - DOCS_MCP_AUTH_AUDIENCE=${DOCS_MCP_AUTH_AUDIENCE:-}
+      - DOCS_MCP_SERVER_PUBLIC_ORIGIN=${DOCS_MCP_SERVER_PUBLIC_ORIGIN:-}
       # Ollama / OpenAI-compatible Embedding Configuration
       - OPENAI_API_BASE=${OPENAI_API_BASE:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-ollama}
