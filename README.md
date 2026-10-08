@@ -47,11 +47,12 @@ Automated deployments are driven via GitHub Actions and Coolify's deploy webhook
 
 - **Validation**: On every push and pull request, GitHub Actions validates Docker Compose syntax (`docker compose config`) and executes container smoke tests.
 - **Path-filtered Deployments**: Pushes to `main` modifying files under `stacks/<stack-name>/**` trigger deployment specifically for that stack.
-- **GitHub Secrets & Environments Setup**:
-  1. Add `COOLIFY_API_TOKEN` as a **Repository Secret** (Settings → Secrets and variables → Actions → Repository secrets).
-  2. Create a GitHub Environment for each stack (Settings → Environments → New environment, e.g. `docs-mcp`).
-  3. Inside each environment, create the environment-scoped secret `COOLIFY_WEBHOOK_URL` containing the deploy webhook URL from Coolify (**Webhooks** tab → **Deploy Webhook**).
-  4. Workflows automatically inherit the repo-wide token and pull the stack-specific webhook URL.
+- **GitHub Secrets Setup (Privacy-Preserving)**:
+  Because this repository is public, sensitive endpoints such as your Coolify server's domain/IP are stored as encrypted **Secrets** (not Variables), keeping them masked in logs and invisible to the public:
+  1. Go to **Settings → Secrets and variables → Actions** (or under the `production` Environment).
+  2. Add **`COOLIFY_BASE_URL`** (Secret): Your Coolify host URL (e.g. `https://coolify.yourdomain.com`).
+  3. Add **`COOLIFY_API_TOKEN`** (Secret): Your Coolify API Bearer token with deploy permissions.
+  4. In each stack's workflow (e.g. `stack-docs-mcp.yml`), specify the target resource's `coolify_resource_uuid`. The pipeline constructs the deploy endpoint dynamically without exposing your server URL.
 
 ---
 

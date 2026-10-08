@@ -7,10 +7,15 @@ on:
         description: "Relative path to stack directory (e.g. stacks/docs-mcp)"
         required: true
         type: string
-      environment:
-        description: "Target GitHub Environment containing COOLIFY_WEBHOOK_URL"
+      coolify_resource_uuid:
+        description: "Coolify resource UUID to deploy"
         required: true
         type: string
+      environment:
+        description: "GitHub environment for deployment tracking"
+        required: false
+        type: string
+        default: "production"
       test_port:
         description: "Container port exposed by test override to poll for readiness (optional)"
         required: false
@@ -22,12 +27,12 @@ on:
         type: string
         default: "/"
     secrets:
+      COOLIFY_BASE_URL:
+        description: "Base URL of the Coolify instance (stored as a secret to protect private domain)"
+        required: true
       COOLIFY_API_TOKEN:
         description: "Coolify API Bearer Token"
-        required: false
-      COOLIFY_WEBHOOK_URL:
-        description: "Stack-specific deploy webhook URL"
-        required: false
+        required: true
 
 jobs:
   validate-and-test:
@@ -84,23 +89,32 @@ jobs:
     steps:
       - name: Trigger Coolify Deployment
         env:
-          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_BASE_URL: ${{ secrets.COOLIFY_BASE_URL }}
           COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          RESOURCE_UUID: ${{ inputs.coolify_resource_uuid }}
         run: |
-          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
-            echo "::error::COOLIFY_WEBHOOK_URL is not configured for environment '${{ inputs.environment }}'."
+          if [ -z "$COOLIFY_BASE_URL" ]; then
+            echo "::error::COOLIFY_BASE_URL secret is not configured."
+            exit 1
+          fi
+          if [ -z "$COOLIFY_API_TOKEN" ]; then
+            echo "::error::COOLIFY_API_TOKEN secret is not configured."
+            exit 1
+          fi
+          if [ -z "$RESOURCE_UUID" ] || [ "$RESOURCE_UUID" = "REPLACE_WITH_DOCS_MCP_UUID" ]; then
+            echo "::error::coolify_resource_uuid is not configured in the workflow."
             exit 1
           fi
 
-          echo "Triggering Coolify deploy webhook for environment '${{ inputs.environment }}'..."
+          # Strip any trailing slash from base URL
+          CLEAN_BASE_URL="${COOLIFY_BASE_URL%/}"
+          DEPLOY_URL="${CLEAN_BASE_URL}/api/v1/deploy?uuid=${RESOURCE_UUID}"
+
+          echo "Triggering Coolify deployment for resource UUID: ${RESOURCE_UUID}..."
           # State-changing API endpoints in Coolify >= 4.2.0 reject GET with 405. -X POST is mandatory.
-          if [ -n "$COOLIFY_API_TOKEN" ]; then
-            RESPONSE=$(curl -fsS -X POST \
-              -H "Authorization: Bearer $COOLIFY_API_TOKEN" \
-              "$COOLIFY_WEBHOOK_URL")
-          else
-            RESPONSE=$(curl -fsS -X POST "$COOLIFY_WEBHOOK_URL")
-          fi
+          RESPONSE=$(curl -fsS -X POST \
+            -H "Authorization: Bearer $COOLIFY_API_TOKEN" \
+            "$DEPLOY_URL")
 
           echo "Coolify response: $RESPONSE"
           echo "Deployment successfully queued in Coolify."

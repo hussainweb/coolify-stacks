@@ -25,7 +25,9 @@ jobs:
     uses: ./.github/workflows/_reusable-deploy.yml
     with:
       stack_dir: stacks/docs-mcp
-      environment: docs-mcp
+      # Replace with the actual Resource UUID from your Coolify dashboard
+      coolify_resource_uuid: 'REPLACE_WITH_DOCS_MCP_UUID'
+      environment: production
       test_port: '6280'
       test_path: '/'
     secrets: inherit
