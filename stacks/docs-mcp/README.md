@@ -45,8 +45,9 @@ Configure any needed environment variables in Coolify's **Environment Variables*
 | `DOCS_MCP_STORE_PATH` | Path for data index and cache | `/data` |
 | `XDG_CONFIG_HOME` | Path for persistent config | `/config` |
 | `OPENAI_API_BASE` | OpenAI-compatible API base URL (e.g. `http://ollama:11434/v1`) | None |
-| `DOCS_MCP_EMBEDDING_MODEL` | Embedding model (e.g. `nomic-embed-text:latest` or `openai:...`) | None (BM25 search) |
+| `DOCS_MCP_EMBEDDING_MODEL` | Embedding model (e.g. `nomic-embed-text:latest`, `gemini:text-embedding-004`) | None (BM25 search) |
 | `OPENAI_API_KEY` | API key (set to `ollama` for local Ollama) | `ollama` |
+| `GOOGLE_API_KEY` | *(Optional)* Google Gemini API key | None |
 | `ANTHROPIC_API_KEY` | *(Optional)* Anthropic API key | None |
 
 > **Using with Local Ollama**:
@@ -54,6 +55,17 @@ Configure any needed environment variables in Coolify's **Environment Variables*
 > 1. Set `OPENAI_API_BASE=http://<ollama-ip>:11434/v1` (point to Ollama's OpenAI-compatible `/v1` endpoint).
 > 2. Set `DOCS_MCP_EMBEDDING_MODEL=nomic-embed-text:latest` (or any model pulled on your Ollama instance).
 > 3. Leave `OPENAI_API_KEY=ollama` (required as non-empty by client validation).
+
+> **Using with Google Gemini**:
+> 1. Provide your `GOOGLE_API_KEY`.
+> 2. Set `DOCS_MCP_EMBEDDING_MODEL=gemini:text-embedding-004` (or `gemini:embedding-001`).
+
+> **How Provider Selection Works with Multiple Keys**:
+> Setting credentials for multiple providers (e.g., having both `OPENAI_API_KEY` and `GOOGLE_API_KEY`) does **not** cause conflicts. The active provider is determined exclusively by the model prefix in **`DOCS_MCP_EMBEDDING_MODEL`**:
+> - `gemini:...` routes to Google Gemini (reads `GOOGLE_API_KEY`).
+> - `openai:...` or untagged local models (like `nomic-embed-text`) route to the OpenAI-compatible endpoint (reads `OPENAI_API_BASE` and `OPENAI_API_KEY`).
+> - If `DOCS_MCP_EMBEDDING_MODEL` is left empty, it defaults to OpenAI's `text-embedding-3-small` (or full-text BM25 search if no keys are set).
+
 
 
 
