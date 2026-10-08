@@ -1,0 +1,40 @@
+[tasks.validate]
+description = "Validate docker-compose syntax across all stacks"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+found=0
+for dir in stacks/*; do
+  if [ -d "$dir" ] && [ -f "$dir/docker-compose.yaml" ]; then
+    found=1
+    echo "==> Validating $dir/docker-compose.yaml..."
+    docker compose -f "$dir/docker-compose.yaml" config -q
+  fi
+done
+
+if [ "$found" -eq 0 ]; then
+  echo "No stacks found to validate."
+else
+  echo "All stacks validated successfully."
+fi
+"""
+
+[tasks.test]
+description = "Validate and test compose stacks locally"
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+
+for dir in stacks/*; do
+  if [ -d "$dir" ] && [ -f "$dir/docker-compose.yaml" ]; then
+    echo "==> Validating $dir..."
+    if [ -f "$dir/docker-compose.test.yaml" ]; then
+      docker compose -f "$dir/docker-compose.yaml" -f "$dir/docker-compose.test.yaml" config -q
+    else
+      docker compose -f "$dir/docker-compose.yaml" config -q
+    fi
+  fi
+done
+echo "All compose configurations valid."
+"""

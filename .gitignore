@@ -1,0 +1,17 @@
+# Local environment and secrets
+.env
+.env.local
+*.local.yaml
+
+# OS and IDE files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Runtime storage & test caches
+data/
+config/
+**/data/
+**/config/
