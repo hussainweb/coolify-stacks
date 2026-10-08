@@ -46,8 +46,12 @@ Coolify supports deploying multiple distinct resources from a single Git reposit
 Automated deployments are driven via GitHub Actions and Coolify's deploy webhook API (`POST /api/v1/deploy`):
 
 - **Validation**: On every push and pull request, GitHub Actions validates Docker Compose syntax (`docker compose config`) and executes container smoke tests.
-- **Path-filtered Deployments**: Pushes to `main` triggering files under `stacks/<stack-name>/**` execute the reusable workflow for that specific stack.
-- **GitHub Environments**: Each stack targets its own GitHub Environment (e.g., `docs-mcp`), where the stack's unique `COOLIFY_WEBHOOK_URL` is securely stored. The repository-wide `COOLIFY_API_TOKEN` is inherited across all environments.
+- **Path-filtered Deployments**: Pushes to `main` modifying files under `stacks/<stack-name>/**` trigger deployment specifically for that stack.
+- **GitHub Secrets & Environments Setup**:
+  1. Add `COOLIFY_API_TOKEN` as a **Repository Secret** (Settings → Secrets and variables → Actions → Repository secrets).
+  2. Create a GitHub Environment for each stack (Settings → Environments → New environment, e.g. `docs-mcp`).
+  3. Inside each environment, create the environment-scoped secret `COOLIFY_WEBHOOK_URL` containing the deploy webhook URL from Coolify (**Webhooks** tab → **Deploy Webhook**).
+  4. Workflows automatically inherit the repo-wide token and pull the stack-specific webhook URL.
 
 ---
 

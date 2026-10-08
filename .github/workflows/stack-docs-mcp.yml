@@ -1,0 +1,31 @@
+name: Stack - Docs MCP
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stacks/docs-mcp/**'
+      - '.github/workflows/stack-docs-mcp.yml'
+      - '.github/workflows/_reusable-deploy.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/docs-mcp/**'
+      - '.github/workflows/stack-docs-mcp.yml'
+      - '.github/workflows/_reusable-deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    name: Pipeline
+    uses: ./.github/workflows/_reusable-deploy.yml
+    with:
+      stack_dir: stacks/docs-mcp
+      environment: docs-mcp
+      test_port: '6280'
+      test_path: '/'
+    secrets: inherit

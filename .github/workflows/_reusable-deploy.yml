@@ -1,0 +1,106 @@
+name: Reusable Stack Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      stack_dir:
+        description: "Relative path to stack directory (e.g. stacks/docs-mcp)"
+        required: true
+        type: string
+      environment:
+        description: "Target GitHub Environment containing COOLIFY_WEBHOOK_URL"
+        required: true
+        type: string
+      test_port:
+        description: "Container port exposed by test override to poll for readiness (optional)"
+        required: false
+        type: string
+        default: ""
+      test_path:
+        description: "Path to curl during smoke test"
+        required: false
+        type: string
+        default: "/"
+    secrets:
+      COOLIFY_API_TOKEN:
+        description: "Coolify API Bearer Token"
+        required: false
+      COOLIFY_WEBHOOK_URL:
+        description: "Stack-specific deploy webhook URL"
+        required: false
+
+jobs:
+  validate-and-test:
+    name: Validate & Test (${{ inputs.stack_dir }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Compose syntax
+        run: |
+          echo "Validating ${{ inputs.stack_dir }}/docker-compose.yaml..."
+          docker compose -f "${{ inputs.stack_dir }}/docker-compose.yaml" config -q
+
+      - name: Run Smoke Test
+        if: inputs.test_port != ''
+        run: |
+          cd "${{ inputs.stack_dir }}"
+          if [ -f "docker-compose.test.yaml" ]; then
+            COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.test.yaml"
+          else
+            COMPOSE_FILES="-f docker-compose.yaml"
+          fi
+
+          echo "Starting containers with ${COMPOSE_FILES}..."
+          docker compose ${COMPOSE_FILES} up -d
+
+          echo "Polling http://localhost:${{ inputs.test_port }}${{ inputs.test_path }} for readiness..."
+          SUCCESS=0
+          for i in $(seq 1 30); do
+            if curl -fsS "http://localhost:${{ inputs.test_port }}${{ inputs.test_path }}" > /dev/null 2>&1; then
+              echo "Smoke test passed after ${i} attempts!"
+              SUCCESS=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "Service failed to become healthy within 60 seconds."
+            docker compose ${COMPOSE_FILES} logs
+            docker compose ${COMPOSE_FILES} down -v
+            exit 1
+          fi
+
+          docker compose ${COMPOSE_FILES} down -v
+
+  deploy:
+    name: Deploy to Coolify (${{ inputs.environment }})
+    needs: validate-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Trigger Coolify Deployment
+        env:
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
+            echo "::error::COOLIFY_WEBHOOK_URL is not configured for environment '${{ inputs.environment }}'."
+            exit 1
+          fi
+
+          echo "Triggering Coolify deploy webhook for environment '${{ inputs.environment }}'..."
+          # State-changing API endpoints in Coolify >= 4.2.0 reject GET with 405. -X POST is mandatory.
+          if [ -n "$COOLIFY_API_TOKEN" ]; then
+            RESPONSE=$(curl -fsS -X POST \
+              -H "Authorization: Bearer $COOLIFY_API_TOKEN" \
+              "$COOLIFY_WEBHOOK_URL")
+          else
+            RESPONSE=$(curl -fsS -X POST "$COOLIFY_WEBHOOK_URL")
+          fi
+
+          echo "Coolify response: $RESPONSE"
+          echo "Deployment successfully queued in Coolify."
