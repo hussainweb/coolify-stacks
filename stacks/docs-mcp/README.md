@@ -44,16 +44,17 @@ Configure any needed environment variables in Coolify's **Environment Variables*
 | `DOCS_MCP_PROTOCOL` | Server protocol (`http` or `stdio`) | `http` |
 | `DOCS_MCP_STORE_PATH` | Path for data index and cache | `/data` |
 | `XDG_CONFIG_HOME` | Path for persistent config | `/config` |
-| `OLLAMA_BASE_URL` | Base URL of local Ollama instance (e.g. `http://ollama:11434/v1`) | None |
-| `DOCS_MCP_EMBEDDING_MODEL` | Embedding model (e.g. `openai:nomic-embed-text`) | None (BM25 search) |
-| `OPENAI_API_KEY` | OpenAI API key or dummy key for Ollama | `ollama` |
+| `OPENAI_API_BASE` | OpenAI-compatible API base URL (e.g. `http://ollama:11434/v1`, falls back to `OLLAMA_BASE_URL`) | None |
+| `DOCS_MCP_EMBEDDING_MODEL` | Embedding model (e.g. `nomic-embed-text:latest` or `openai:...`) | None (BM25 search) |
+| `OPENAI_API_KEY` | API key (set to `ollama` for local Ollama) | `ollama` |
 | `ANTHROPIC_API_KEY` | *(Optional)* Anthropic API key | None |
 
 > **Using with Local Ollama**:
-> To use semantic vector search with your homelab Ollama:
-> 1. Set `OLLAMA_BASE_URL=http://<ollama-ip>:11434/v1` (point to Ollama's OpenAI-compatible `/v1` endpoint).
-> 2. Set `DOCS_MCP_EMBEDDING_MODEL=openai:nomic-embed-text` (or your preferred embedding model pulled on Ollama).
+> To enable semantic vector embeddings using your homelab Ollama:
+> 1. Set `OPENAI_API_BASE=http://<ollama-ip>:11434/v1` (or `OLLAMA_BASE_URL=http://<ollama-ip>:11434/v1`).
+> 2. Set `DOCS_MCP_EMBEDDING_MODEL=nomic-embed-text:latest` (or any model pulled on your Ollama instance).
 > 3. Leave `OPENAI_API_KEY=ollama` (required as non-empty by client validation).
+
 
 
 ---
