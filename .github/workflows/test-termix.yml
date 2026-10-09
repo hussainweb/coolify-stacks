@@ -1,0 +1,23 @@
+name: Test - Termix
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/termix/**'
+      - '.github/workflows/test-termix.yml'
+      - '.github/workflows/_reusable-test.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Pipeline
+    uses: ./.github/workflows/_reusable-test.yml
+    with:
+      stack_dir: stacks/termix
+      test_port: '8080'
+      test_path: '/health'
