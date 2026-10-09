@@ -25,7 +25,7 @@ jobs:
     uses: ./.github/workflows/_reusable-deploy.yml
     with:
       stack_dir: stacks/termix
-      coolify_resource_uuid: 'REPLACE_WITH_TERMIX_UUID'
+      coolify_resource_uuid: 'gycznrx4w3asg9x6tzdhqnjn'
       environment: production
       test_port: '8080'
       test_path: '/health'
