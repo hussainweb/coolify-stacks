@@ -1,0 +1,32 @@
+name: Stack - Termix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stacks/termix/**'
+      - '.github/workflows/stack-termix.yml'
+      - '.github/workflows/_reusable-deploy.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/termix/**'
+      - '.github/workflows/stack-termix.yml'
+      - '.github/workflows/_reusable-deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    name: Pipeline
+    uses: ./.github/workflows/_reusable-deploy.yml
+    with:
+      stack_dir: stacks/termix
+      coolify_resource_uuid: 'REPLACE_WITH_TERMIX_UUID'
+      environment: production
+      test_port: '8080'
+      test_path: '/health'
+    secrets: inherit

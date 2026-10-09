@@ -1,0 +1,32 @@
+services:
+  termix:
+    image: ghcr.io/lukegus/termix:2.9.2
+    container_name: termix
+    restart: unless-stopped
+    environment:
+      - PORT=${PORT:-8080}
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - ENABLE_GUACAMOLE=${ENABLE_GUACAMOLE:-true}
+      - GUACD_HOST=${GUACD_HOST:-guacd}
+      - GUACD_PORT=${GUACD_PORT:-4822}
+      - GUACD_TUNNEL_HOST=${GUACD_TUNNEL_HOST:-termix}
+      - OIDC_FORCE_HTTPS=${OIDC_FORCE_HTTPS:-true}
+    volumes:
+      - termix-data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:$${PORT:-8080}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      - guacd
+
+  guacd:
+    image: guacamole/guacd:1.6.0
+    container_name: guacd
+    restart: unless-stopped
+
+volumes:
+  termix-data:
