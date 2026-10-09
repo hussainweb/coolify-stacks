@@ -6,12 +6,7 @@ on:
     paths:
       - 'stacks/docs-mcp/**'
       - '.github/workflows/stack-docs-mcp.yml'
-      - '.github/workflows/_reusable-deploy.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'stacks/docs-mcp/**'
-      - '.github/workflows/stack-docs-mcp.yml'
+      - '.github/workflows/_reusable-test.yml'
       - '.github/workflows/_reusable-deploy.yml'
   workflow_dispatch:
 

@@ -1,0 +1,29 @@
+name: Test Stacks
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.stack_dir }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - stack_dir: stacks/docs-mcp
+            test_port: '6280'
+            test_path: '/'
+          - stack_dir: stacks/termix
+            test_port: '8080'
+            test_path: '/health'
+    uses: ./.github/workflows/_reusable-test.yml
+    with:
+      stack_dir: ${{ matrix.stack_dir }}
+      test_port: ${{ matrix.test_port }}
+      test_path: ${{ matrix.test_path }}

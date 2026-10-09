@@ -25,12 +25,13 @@ When adding a new stack (`stacks/<stack-name>/`), complete all of the following:
    - **Named persistent volumes**: Name volumes plainly (e.g. `<stack>-data:/data`); Coolify prefixes them with the resource UUID automatically.
 
 3. **CI/CD Deployment Workflow**:
-   - Create `.github/workflows/stack-<stack-name>.yml`.
+   - Create `.github/workflows/stack-<stack-name>.yml` (triggers on `push` to `main` with path filtering, plus `workflow_dispatch`).
    - Add path filtering:
      ```yaml
      paths:
        - 'stacks/<stack-name>/**'
        - '.github/workflows/stack-<stack-name>.yml'
+       - '.github/workflows/_reusable-test.yml'
        - '.github/workflows/_reusable-deploy.yml'
      ```
    - Invoke `_reusable-deploy.yml` targeting `environment: production` and supplying:
@@ -38,6 +39,7 @@ When adding a new stack (`stacks/<stack-name>/`), complete all of the following:
      - `coolify_resource_uuid: '<uuid>'`
      - `test_port: '<port>'`
      - `test_path: '/'`
+   - Register the stack in `.github/workflows/test.yml` matrix to enable automated PR smoke testing via `_reusable-test.yml`.
 
 4. **Dependabot Updates**:
    - Add an entry in `.github/dependabot.yml`:
