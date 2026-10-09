@@ -1,4 +1,4 @@
-name: Reusable Stack Pipeline
+name: Reusable Stack Deployment
 
 on:
   workflow_call:
@@ -37,53 +37,15 @@ on:
 jobs:
   validate-and-test:
     name: Validate & Test (${{ inputs.stack_dir }})
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate Compose syntax
-        run: |
-          echo "Validating ${{ inputs.stack_dir }}/docker-compose.yaml..."
-          docker compose -f "${{ inputs.stack_dir }}/docker-compose.yaml" config -q
-
-      - name: Run Smoke Test
-        if: inputs.test_port != ''
-        run: |
-          cd "${{ inputs.stack_dir }}"
-          if [ -f "docker-compose.test.yaml" ]; then
-            COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.test.yaml"
-          else
-            COMPOSE_FILES="-f docker-compose.yaml"
-          fi
-
-          echo "Starting containers with ${COMPOSE_FILES}..."
-          docker compose ${COMPOSE_FILES} up -d
-
-          echo "Polling http://localhost:${{ inputs.test_port }}${{ inputs.test_path }} for readiness..."
-          SUCCESS=0
-          for i in $(seq 1 30); do
-            if curl -fsS "http://localhost:${{ inputs.test_port }}${{ inputs.test_path }}" > /dev/null 2>&1; then
-              echo "Smoke test passed after ${i} attempts!"
-              SUCCESS=1
-              break
-            fi
-            sleep 2
-          done
-
-          if [ "$SUCCESS" -ne 1 ]; then
-            echo "Service failed to become healthy within 60 seconds."
-            docker compose ${COMPOSE_FILES} logs
-            docker compose ${COMPOSE_FILES} down -v
-            exit 1
-          fi
-
-          docker compose ${COMPOSE_FILES} down -v
+    uses: ./.github/workflows/_reusable-test.yml
+    with:
+      stack_dir: ${{ inputs.stack_dir }}
+      test_port: ${{ inputs.test_port }}
+      test_path: ${{ inputs.test_path }}
 
   deploy:
     name: Deploy to Coolify (${{ inputs.environment }})
     needs: validate-and-test
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
