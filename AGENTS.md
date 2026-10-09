@@ -25,19 +25,22 @@ When adding a new stack (`stacks/<stack-name>/`), complete all of the following:
    - **Named persistent volumes**: Name volumes plainly (e.g. `<stack>-data:/data`); Coolify prefixes them with the resource UUID automatically.
 
 3. **CI/CD Workflows**:
-   - **Deployment Workflow** (`.github/workflows/stack-<stack-name>.yml`):
-     - Triggers on `push` to `main` with path filtering, plus `workflow_dispatch`.
-     - Invokes `_reusable-deploy.yml` targeting `environment: production` and supplying:
+   - **Stack Workflow** (`.github/workflows/stack-<stack-name>.yml`):
+     - Single workflow per stack containing both `test` and `deploy` jobs.
+     - Triggers on `push` to `main`, `pull_request` to `main`, and `workflow_dispatch`.
+     - Path filtering covers:
+       - `stacks/<stack-name>/**`
+       - `.github/workflows/stack-<stack-name>.yml`
+       - `.github/actions/test-stack/**`
+       - `.github/actions/deploy-stack/**`
+     - **`test` Job**: Runs on both PR and push. Checks out the repository and invokes `./.github/actions/test-stack` supplying:
        - `stack_dir: stacks/<stack-name>`
+       - `test_port: '<port>'`
+       - `test_path: '/'` (or specific endpoint)
+     - **`deploy` Job**: Runs only on push to `main` (`if: github.ref == 'refs/heads/main'`), depends on `test` (`needs: test`), targets `environment: production`, and invokes `./.github/actions/deploy-stack` supplying:
+       - `coolify_base_url: ${{ secrets.COOLIFY_BASE_URL }}`
+       - `coolify_api_token: ${{ secrets.COOLIFY_API_TOKEN }}`
        - `coolify_resource_uuid: '<uuid>'`
-       - `test_port: '<port>'`
-       - `test_path: '/'`
-   - **PR Testing Workflow** (`.github/workflows/test-<stack-name>.yml`):
-     - Triggers on `pull_request` to `main` with path filtering, plus `workflow_dispatch`.
-     - Invokes `_reusable-test.yml` (no secrets required) supplying:
-       - `stack_dir: stacks/<stack-name>`
-       - `test_port: '<port>'`
-       - `test_path: '/'`
 
 4. **Dependabot Updates**:
    - Add an entry in `.github/dependabot.yml`:

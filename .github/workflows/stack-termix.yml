@@ -6,8 +6,15 @@ on:
     paths:
       - 'stacks/termix/**'
       - '.github/workflows/stack-termix.yml'
-      - '.github/workflows/_reusable-test.yml'
-      - '.github/workflows/_reusable-deploy.yml'
+      - '.github/actions/test-stack/**'
+      - '.github/actions/deploy-stack/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/termix/**'
+      - '.github/workflows/stack-termix.yml'
+      - '.github/actions/test-stack/**'
+      - '.github/actions/deploy-stack/**'
   workflow_dispatch:
 
 concurrency:
@@ -15,13 +22,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pipeline:
-    name: Pipeline
-    uses: ./.github/workflows/_reusable-deploy.yml
-    with:
-      stack_dir: stacks/termix
-      coolify_resource_uuid: 'gycznrx4w3asg9x6tzdhqnjn'
-      environment: production
-      test_port: '8080'
-      test_path: '/health'
-    secrets: inherit
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test Stack
+        uses: ./.github/actions/test-stack
+        with:
+          stack_dir: stacks/termix
+          test_port: '8080'
+          test_path: '/health'
+
+  deploy:
+    name: Deploy to Coolify
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy Stack
+        uses: ./.github/actions/deploy-stack
+        with:
+          coolify_base_url: ${{ secrets.COOLIFY_BASE_URL }}
+          coolify_api_token: ${{ secrets.COOLIFY_API_TOKEN }}
+          coolify_resource_uuid: 'gycznrx4w3asg9x6tzdhqnjn'

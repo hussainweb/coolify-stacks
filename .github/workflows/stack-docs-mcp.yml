@@ -6,8 +6,15 @@ on:
     paths:
       - 'stacks/docs-mcp/**'
       - '.github/workflows/stack-docs-mcp.yml'
-      - '.github/workflows/_reusable-test.yml'
-      - '.github/workflows/_reusable-deploy.yml'
+      - '.github/actions/test-stack/**'
+      - '.github/actions/deploy-stack/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/docs-mcp/**'
+      - '.github/workflows/stack-docs-mcp.yml'
+      - '.github/actions/test-stack/**'
+      - '.github/actions/deploy-stack/**'
   workflow_dispatch:
 
 concurrency:
@@ -15,13 +22,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pipeline:
-    name: Pipeline
-    uses: ./.github/workflows/_reusable-deploy.yml
-    with:
-      stack_dir: stacks/docs-mcp
-      coolify_resource_uuid: 'npxwydzslm1fivfup4xyrrgr'
-      environment: production
-      test_port: '6280'
-      test_path: '/'
-    secrets: inherit
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test Stack
+        uses: ./.github/actions/test-stack
+        with:
+          stack_dir: stacks/docs-mcp
+          test_port: '6280'
+          test_path: '/'
+
+  deploy:
+    name: Deploy to Coolify
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy Stack
+        uses: ./.github/actions/deploy-stack
+        with:
+          coolify_base_url: ${{ secrets.COOLIFY_BASE_URL }}
+          coolify_api_token: ${{ secrets.COOLIFY_API_TOKEN }}
+          coolify_resource_uuid: 'npxwydzslm1fivfup4xyrrgr'
