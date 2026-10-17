@@ -2,6 +2,11 @@ version: 2
 updates:
   # Monitor Docker Compose images for each stack
   - package-ecosystem: "docker-compose"
+    directory: "/stacks/atuin-server"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker-compose"
     directory: "/stacks/docs-mcp"
     schedule:
       interval: "weekly"

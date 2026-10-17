@@ -1,0 +1,54 @@
+name: Stack - Atuin Server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'stacks/atuin-server/**'
+      - '.github/workflows/stack-atuin-server.yml'
+      - '.github/actions/test-stack/**'
+      - '.github/actions/deploy-stack/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stacks/atuin-server/**'
+      - '.github/workflows/stack-atuin-server.yml'
+      - '.github/actions/test-stack/**'
+      - '.github/actions/deploy-stack/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Test Stack
+        uses: ./.github/actions/test-stack
+        with:
+          stack_dir: stacks/atuin-server
+          test_port: '8888'
+          test_path: '/'
+
+  deploy:
+    name: Deploy to Coolify
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Deploy Stack
+        uses: ./.github/actions/deploy-stack
+        with:
+          coolify_base_url: ${{ secrets.COOLIFY_BASE_URL }}
+          coolify_api_token: ${{ secrets.COOLIFY_API_TOKEN }}
+          coolify_resource_uuid: 'ekg4sc80o0s8ccs0g4cok0oc'

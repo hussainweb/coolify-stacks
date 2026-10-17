@@ -1,0 +1,21 @@
+services:
+  atuin:
+    image: ghcr.io/atuinsh/atuin:18.23.0
+    container_name: atuin
+    command: start
+    restart: unless-stopped
+    environment:
+      - ATUIN_HOST=${ATUIN_HOST:-0.0.0.0}
+      - ATUIN_PORT=${ATUIN_PORT:-8888}
+      - ATUIN_OPEN_REGISTRATION=${ATUIN_OPEN_REGISTRATION:-true}
+      - ATUIN_DB_URI=${ATUIN_DB_URI:-postgres://${POSTGRES_USER:-atuin}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-db}:5432/${POSTGRES_DB:-atuin}}
+      - ATUIN_CONFIG_DIR=${ATUIN_CONFIG_DIR:-/config}
+      - RUST_LOG=${RUST_LOG:-info,atuin_server=debug}
+    volumes:
+      - ./config:/config
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:$${ATUIN_PORT:-8888}/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

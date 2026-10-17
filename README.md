@@ -10,6 +10,7 @@ This repository serves as a centralized monorepo for self-hosted service definit
 
 | Stack | Description | Upstream Image | Documentation |
 | :--- | :--- | :--- | :--- |
+| **`atuin-server`** | Self-hosted sync server for shell history (Atuin) | `ghcr.io/atuinsh/atuin:18.23.0` | [atuin-server README](stacks/atuin-server/README.md) |
 | **`docs-mcp`** | Grounded Tools Docs MCP server (documentation fetch & search) | `ghcr.io/arabold/docs-mcp-server:3.2.1` | [docs-mcp README](stacks/docs-mcp/README.md) |
 | **`termix`** | Self-hosted server management platform (SSH, RDP, VNC, SFTP, Docker) | `ghcr.io/lukegus/termix:2.9.2` | [termix README](stacks/termix/README.md) |
 
