@@ -51,4 +51,4 @@ jobs:
         with:
           coolify_base_url: ${{ secrets.COOLIFY_BASE_URL }}
           coolify_api_token: ${{ secrets.COOLIFY_API_TOKEN }}
-          coolify_resource_uuid: 'ekg4sc80o0s8ccs0g4cok0oc'
+          coolify_resource_uuid: 'uwy8zkuoqiievwcyuafwcfoj'
