@@ -72,16 +72,14 @@ services:
       db:
         condition: service_healthy
     environment:
-      - ATUIN_HOST=${ATUIN_HOST:-0.0.0.0}
-      - ATUIN_PORT=${ATUIN_PORT:-8888}
-      - ATUIN_OPEN_REGISTRATION=${ATUIN_OPEN_REGISTRATION:-true}
-      - ATUIN_DB_URI=postgres://${POSTGRES_USER:-atuin}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-atuin}
-      - ATUIN_CONFIG_DIR=/config
-      - RUST_LOG=${RUST_LOG:-info,atuin_server=debug}
+      ATUIN_HOST: "0.0.0.0"
+      ATUIN_DB_URI: postgres://${POSTGRES_USER:-atuin}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-atuin}
+      ATUIN_CONFIG_DIR: /config
+      RUST_LOG: ${RUST_LOG:-info,atuin_server=debug}
     volumes:
       - ./config:/config
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:$${ATUIN_PORT:-8888}/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8888/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -121,21 +119,17 @@ The stack mounts `./config:/config` into the container:
 
 ## ⚙️ Environment Variables
 
-Configure these in Coolify's **Environment Variables** tab:
+In the Atuin service settings in Coolify, go to the **Environment Variables** tab to configure your database connection and log levels:
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `ATUIN_HOST` | Listening host interface | `0.0.0.0` |
-| `ATUIN_PORT` | Listening HTTP port | `8888` |
-| `ATUIN_OPEN_REGISTRATION` | Allow new user registrations (`true` / `false`) | `true` |
-| `ATUIN_DB_URI` | Full database connection string | `postgres://${POSTGRES_USER:-atuin}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-db}:5432/${POSTGRES_DB:-atuin}` |
-| `POSTGRES_HOST` | Database hostname (when using default DB URI) | `db` |
-| `POSTGRES_PORT` | Database port | `5432` |
+| `POSTGRES_HOST` | PostgreSQL service name or host | `db` |
 | `POSTGRES_USER` | Database username | `atuin` |
 | `POSTGRES_PASSWORD` | Database password | `password` |
-| `POSTGRES_DB` | Database database name | `atuin` |
-| `ATUIN_CONFIG_DIR` | Directory containing `server.toml` | `/config` |
+| `POSTGRES_DB` | Database name | `atuin` |
 | `RUST_LOG` | Logging verbosity | `info,atuin_server=debug` |
+
+Coolify uses these to construct `ATUIN_DB_URI` automatically (`postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}`).
 
 ---
 
@@ -143,12 +137,8 @@ Configure these in Coolify's **Environment Variables** tab:
 
 Once you have created your initial user account, prevent unauthorized registrations by closing public registration:
 
-1. In Coolify, go to the **Environment Variables** tab of your Atuin service.
-2. Set:
-   ```env
-   ATUIN_OPEN_REGISTRATION=false
-   ```
-   *(Alternatively, set `open_registration = false` in `server.toml`)*.
+1. Open `config/server.toml` (either in the repository or in Coolify).
+2. Set `open_registration = false`.
 3. Redeploy the service.
 
 ---
