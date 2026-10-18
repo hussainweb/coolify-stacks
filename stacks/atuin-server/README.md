@@ -18,11 +18,15 @@ Atuin replaces your standard shell history with an SQLite database and records a
 3. Enter `https://github.com/hussainweb/coolify-stacks` and select branch `main`.
 4. Select **Docker Compose** as the build pack.
 
-### 2. Configure Paths
+### 2. Configure Paths & Settings
 Under **General** settings:
 - **Base Directory**: `/stacks/atuin-server`
 - **Docker Compose Location**: `docker-compose.yaml`
 - **Watch Paths**: `/stacks/atuin-server/**`
+- **Preserve Repository**: Enable **"Preserve repository during deployment"**. This is critical because the stack mounts `./config` from the cloned repository. If left unchecked, Coolify removes the cloned repository after building, causing the bind mount to be empty and Atuin to fail.
+
+Under **Advanced** settings:
+- **Connect to Predefined Network**: Enable **"Connect to predefined network"** (select `coolify`). This connects Atuin to Coolify's shared Docker network so it can resolve and communicate with your PostgreSQL database container.
 
 > **Note**: Setting **Watch Paths** is essential in a monorepo setup. It ensures Coolify only rebuilds or redeploys this application when files inside `/stacks/atuin-server/` change.
 
@@ -45,6 +49,7 @@ This approach leverages Coolify's built-in database management, automated backup
    - `POSTGRES_USER`: Database user.
    - `POSTGRES_PASSWORD`: Database password.
    - `POSTGRES_DB`: Database name.
+4. In the Atuin service's **Advanced** tab, ensure **Connect to predefined network** (`coolify`) is enabled so the Atuin container can reach the PostgreSQL container on the internal Docker network.
 
 Coolify dynamically constructs `ATUIN_DB_URI` using these variables.
 
