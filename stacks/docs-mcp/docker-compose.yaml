@@ -1,6 +1,6 @@
 services:
   docs-mcp:
-    image: ghcr.io/arabold/docs-mcp-server:3.2.1
+    image: ghcr.io/arabold/docs-mcp-server:3.3.0
     container_name: docs-mcp
     restart: unless-stopped
     command: ["server", "--protocol", "http"]
