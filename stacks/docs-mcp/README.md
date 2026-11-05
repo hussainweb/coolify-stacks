@@ -43,23 +43,32 @@ Configure any needed environment variables in Coolify's **Environment Variables*
 | `PORT` | Listening port | `6280` |
 | `DOCS_MCP_PROTOCOL` | Server protocol (`http` or `stdio`) | `http` |
 | `DOCS_MCP_STORE_PATH` | Path for data index and cache | `/data` |
+| `DOCS_MCP_SERVER_PUBLIC_URL` | Absolute public URL (e.g. `https://docs-mcp.example.com`). Required behind reverse proxies for Host validation & OAuth | None |
+| `DOCS_MCP_SERVER_ALLOWED_ORIGINS` | Comma-separated list of additional allowed browser origins/hostnames | None |
 | `DOCS_MCP_AUTH_ENABLED` | Enable OAuth2/OIDC authentication (`true` or `false`) | `false` |
-| `DOCS_MCP_AUTH_ISSUER_URL` | Issuer / discovery URL of OIDC provider (e.g. `https://auth.example.com`) | None |
-| `DOCS_MCP_AUTH_AUDIENCE` | Expected JWT audience claim (e.g. `https://docs-mcp.example.com`) | None |
-| `DOCS_MCP_SERVER_PUBLIC_ORIGIN` | Externally reachable URL advertised in OAuth metadata (e.g. `https://docs-mcp.example.com`) | None |
+| `DOCS_MCP_AUTH_ISSUER_URL` | Issuer / discovery URL of OIDC provider (e.g. `https://accounts.google.com`) | None |
+| `DOCS_MCP_AUTH_AUDIENCE` | Expected JWT audience claim (e.g. `https://docs-mcp.example.com/mcp`) | None |
+| `DOCS_MCP_SERVER_PUBLIC_ORIGIN` | *(Legacy alias)* External domain origin advertised in OAuth metadata | None |
 | `OPENAI_API_BASE` | OpenAI-compatible API base URL (e.g. `http://ollama:11434/v1`) | None |
 | `DOCS_MCP_EMBEDDING_MODEL` | Embedding model (e.g. `nomic-embed-text:latest`, `gemini:text-embedding-004`) | None (BM25 search) |
 | `OPENAI_API_KEY` | API key (set to `ollama` for local Ollama) | `ollama` |
 | `GOOGLE_API_KEY` | *(Optional)* Google Gemini API key | None |
 | `ANTHROPIC_API_KEY` | *(Optional)* Anthropic API key | None |
 
-> **Authentication (OAuth2 / OIDC)**:
-> The Docs MCP server supports RFC 6749 / RFC 7591 OAuth2 and OIDC Bearer token validation for protecting MCP endpoints:
-> - **Enabling Authentication**: Set `DOCS_MCP_AUTH_ENABLED=true`. The server natively validates JWT tokens against your OIDC discovery endpoint.
-> - **Issuer URL (`DOCS_MCP_AUTH_ISSUER_URL`)**: Point to your OIDC provider endpoint (e.g. `https://auth.example.com` or your Keycloak / Authentik / Google / TinyAuth OIDC issuer). The server queries `/.well-known/openid-configuration` and validates JWT signatures via JWKS.
-> - **Audience (`DOCS_MCP_AUTH_AUDIENCE`)**: The expected `aud` claim in incoming Bearer tokens (e.g. `https://docs-mcp.example.com` or client ID).
-> - **Public Origin (`DOCS_MCP_SERVER_PUBLIC_ORIGIN`)**: External domain (e.g. `https://docs-mcp.example.com`) advertised in OAuth discovery metadata when running behind reverse proxies.
-> - **Forward-Auth (TinyAuth Web SSO)**: If you use a forward-auth proxy like TinyAuth to protect the web dashboard in your homelab reverse proxy (NPM/Traefik), you can leave `DOCS_MCP_AUTH_ENABLED=false` on the container and attach your forward-auth snippet to the web route in the reverse proxy. Alternatively, configure TinyAuth as your OIDC issuer for native MCP Bearer token verification.
+> **Host Filtering & DNS Rebinding Protection (HTTP 403)**:
+> In recent versions, `docs-mcp-server` enforces strict host header validation to guard against DNS rebinding. Any incoming request whose `Host` header does not match localhost/loopback, internal container names, `DOCS_MCP_SERVER_PUBLIC_URL`, or `DOCS_MCP_SERVER_ALLOWED_ORIGINS` will be rejected with **HTTP 403 Forbidden**.
+> - **Behind a Reverse Proxy (Coolify / Traefik)**: Always set `DOCS_MCP_SERVER_PUBLIC_URL=https://<your-domain>` (e.g. `https://docs-mcp.example.com`) so the server permits requests arriving with your public domain in the `Host` header.
+> - **Multiple / Alternate Domains**: Add any additional hostnames (e.g. `http://nas.local:6280`) to `DOCS_MCP_SERVER_ALLOWED_ORIGINS` as a comma-separated list.
+
+> **Authentication (OAuth2 / OIDC) & Forward-Auth**:
+> The Docs MCP server can act as an RFC 6749 / RFC 7591 OAuth 2.0 Resource Server:
+> - **Scope of Built-in Auth**: Enabling `DOCS_MCP_AUTH_ENABLED=true` strictly validates Bearer tokens on the MCP HTTP endpoint (`/mcp`). It does **not** protect the web UI dashboard at `/` or the internal tRPC `/api` endpoints.
+> - **Why TinyAuth Cannot Act as OIDC Issuer**: TinyAuth is a forward-auth proxy, not a full OIDC Identity Provider. It lacks an OIDC discovery endpoint (`/.well-known/openid-configuration`), Dynamic Client Registration (RFC 7591), and JWKS cryptographic endpoints. Pointing `DOCS_MCP_AUTH_ISSUER_URL` to TinyAuth will not work.
+> - **Why Forward-Auth Reverse Proxies Break AI Clients**: Protecting the entire domain with TinyAuth (or Cloudflare Access / Authelia) sends an HTTP 302 redirect to an HTML login page when a client is unauthenticated. Non-browser AI clients (Claude Desktop, Cursor, CLI agents) do not have browser rendering engines and immediately fail when encountering HTML on `/mcp`.
+> - **Recommended Strategies**:
+>   1. **Private Network / Tailscale (Recommended)**: Serve Docs MCP over a private internal domain or Tailscale with `DOCS_MCP_AUTH_ENABLED=false`. Network access control protects both the Web UI and MCP endpoint without auth hurdles for AI agents.
+>   2. **Reverse Proxy Path Split**: Protect `/` and `/api/*` with TinyAuth forward-auth or HTTP Basic Auth, while exempting `/mcp` (or protecting `/mcp` with token headers).
+>   3. **External OIDC Provider**: Configure a true OIDC provider (Google OIDC or Keycloak) with `DOCS_MCP_AUTH_ENABLED=true` for clients supporting OAuth 2.1 code flows.
 
 > **Using with Local Ollama**:
 > To enable semantic vector embeddings using your homelab Ollama:
